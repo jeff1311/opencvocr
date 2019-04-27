@@ -2,6 +2,8 @@ package com.ljf.opencvocr.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ljf.opencvocr.util.Constants;
+import com.ljf.opencvocr.util.IdCardUtil;
+import com.ljf.opencvocr.util.ImgUtil;
 import com.ljf.opencvocr.util.Util;
 
 import net.sourceforge.tess4j.ITesseract;

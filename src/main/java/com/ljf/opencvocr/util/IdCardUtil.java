@@ -1,7 +1,6 @@
-package com.ljf.opencvocr.service;
+package com.ljf.opencvocr.util;
 
 import com.alibaba.fastjson.JSONObject;
-import com.ljf.opencvocr.util.Constants;
 
 /**
  * 身份证工具类
@@ -11,7 +10,7 @@ import com.ljf.opencvocr.util.Constants;
 public class IdCardUtil {
 
     public static JSONObject filterOcrInfo(String ocrInfo){
-        System.out.println(ocrInfo);
+//        System.out.println(ocrInfo);
         ocrInfo = filter(ocrInfo);
         ocrInfo = ocrInfo.replace("\n\n","\n");
         System.out.println(ocrInfo);

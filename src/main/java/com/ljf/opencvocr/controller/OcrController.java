@@ -1,6 +1,5 @@
 package com.ljf.opencvocr.controller;
 
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,10 +11,13 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.alibaba.fastjson.JSONObject;
+import com.ljf.opencvocr.dao.Img;
 import com.ljf.opencvocr.dao.Model;
 import com.ljf.opencvocr.service.OcrThread;
 import com.ljf.opencvocr.service.Upload;
@@ -24,7 +26,10 @@ import com.ljf.opencvocr.util.Util;
 @Controller
 public class OcrController {
 	
-	private List<BufferedImage> images = null;
+	@Autowired
+	SimpMessagingTemplate sm;
+	
+	private List<Img> images = null;
 
 	private static List<JSONObject> ocrInfo = new ArrayList<JSONObject>();
 
@@ -34,6 +39,7 @@ public class OcrController {
         Model uploadInfo = Upload.getInfo(request);
         Map<String, String> params = uploadInfo.getParams();
         String test = params.get("test");
+        String uuid = params.get("uuid");
         images = uploadInfo.getImages();
 
         if(ocrInfo.size() != 0){
@@ -48,36 +54,36 @@ public class OcrController {
         ExecutorService executorService = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,keepAliveTime, TimeUnit.SECONDS, runnables);
 
         //每个线程的任务
-        List<BufferedImage> task1 = new ArrayList<BufferedImage>();
-        List<BufferedImage> task2 = new ArrayList<BufferedImage>();
-        List<BufferedImage> task3 = new ArrayList<BufferedImage>();
-        List<BufferedImage> task4 = new ArrayList<BufferedImage>();
+        List<Img> task1 = new ArrayList<Img>();
+        List<Img> task2 = new ArrayList<Img>();
+        List<Img> task3 = new ArrayList<Img>();
+        List<Img> task4 = new ArrayList<Img>();
 
         //任务分配
         for(int i = 0;i < images.size();i ++){
-            BufferedImage image = images.get(i);
+            Img img = images.get(i);
             int n = i % 4;
             switch(n){
                 case 0:
-                    task1.add(image);
+                    task1.add(img);
                     break;
                 case 1:
-                    task2.add(image);
+                    task2.add(img);
                     break;
                 case 2:
-                    task3.add(image);
+                    task3.add(img);
                     break;
                 case 3:
-                    task4.add(image);
+                    task4.add(img);
                     break;
             }
         }
 
         //创建ocr对象
-        OcrThread ocr1 = new OcrThread(task1,ocrInfo);
-        OcrThread ocr2 = new OcrThread(task2,ocrInfo);
-        OcrThread ocr3 = new OcrThread(task3,ocrInfo);
-        OcrThread ocr4 = new OcrThread(task4,ocrInfo);
+        OcrThread ocr1 = new OcrThread(task1,ocrInfo,uuid,sm);
+        OcrThread ocr2 = new OcrThread(task2,ocrInfo,uuid,sm);
+        OcrThread ocr3 = new OcrThread(task3,ocrInfo,uuid,sm);
+        OcrThread ocr4 = new OcrThread(task4,ocrInfo,uuid,sm);
 
         //开启线程执行
         executorService.execute(ocr1);

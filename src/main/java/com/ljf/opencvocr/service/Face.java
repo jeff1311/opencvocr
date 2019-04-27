@@ -6,6 +6,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 import com.ljf.opencvocr.util.Constants;
+import com.ljf.opencvocr.util.ImgUtil;
 import com.ljf.opencvocr.util.Util;
 
 import java.util.Date;

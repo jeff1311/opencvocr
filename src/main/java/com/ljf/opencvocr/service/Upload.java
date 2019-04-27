@@ -1,5 +1,16 @@
 package com.ljf.opencvocr.service;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -7,13 +18,9 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ljf.opencvocr.dao.Img;
 import com.ljf.opencvocr.dao.Model;
-
-import javax.servlet.http.HttpServletRequest;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.InputStream;
-import java.util.*;
+import com.ljf.opencvocr.util.ImgUtil;
 
 public class Upload {
 
@@ -23,7 +30,7 @@ public class Upload {
 		// 从页面中拿取数据，因为上传页的编码格式跟一般的不同，使用的是enctype="multipart/form-data"
 		// form提交采用multipart/form-data,无法采用req.getParameter()取得数据
 		Map<String,String> params = new HashMap<String,String>();
-		List<BufferedImage> images = new ArrayList<BufferedImage>();;
+		List<Img> images = new ArrayList<Img>();;
 		// 判断上传表单是否为multipart/form-data类型
 		if (ServletFileUpload.isMultipartContent(request)) {
 
@@ -58,19 +65,23 @@ public class Upload {
 					
 					FileItem fileItem = fileItems.next();
 					if(fileItem.isFormField()){// 普通表单元素
-						String name = fileItem.getFieldName();// name属性值
+						String fieldName = fileItem.getFieldName();
+						String name = fieldName;// name属性值
 						String value = fileItem.getString("utf-8");// name对应的value值
 						logger.info(name + " = " + value);
 						params.put(name, value);
 					}else{// 文件
 						// 文件名称
 						String fileName = fileItem.getName();
-						logger.info("原文件名：" + fileName);
-
+						logger.info("fileName:{}",fileName);
+						
+						String imgId = fileItem.getFieldName();
 						InputStream is = fileItem.getInputStream();
 						byte[] byteArray = ImgUtil.toByteArray(is);
 						BufferedImage image = ImgUtil.toBufferedImage(byteArray);
-						images.add(image);
+						
+						Img img = new Img(imgId,image);
+						images.add(img);
 						//关闭流
 						is.close();
 						// 7.删除临时文件

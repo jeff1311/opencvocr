@@ -26,8 +26,12 @@
     <div id="idCard"></div>
 </div>
 </body>
-<script type="text/javascript" src="/js/jquery-2.1.1.min.js"></script>
+<script src="/webjars/jquery/jquery.min.js"></script>
+<script src="/webjars/sockjs-client/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/stomp.min.js"></script>
 <script type="text/javascript">
+	var uuid = uuid();
+	console.log(uuid);
 
     $('#select').click(function(){
         $('#img').click();
@@ -51,10 +55,10 @@
 
     function ocr(files){
         var data = new FormData();
+        data.append('uuid',uuid);
         data.append('test',1);
         for(var i = 0;i < files.length;i ++){
-        	console.log(i);
-            data.append('file' + i, files[i]); // file 对象
+            data.append('img' + i, files[i]); // file 对象
         }
         // 提交
         $.ajax({
@@ -67,13 +71,15 @@
             beforeSend: function(){
                 var loading = '';
                 for(var i = 0;i < files.length;i ++){
-                    loading += ['<div class="loading">',
-                                '	<div class="line-scale">',
-                                '	  <div></div>',
-                                '	  <div></div>',
-                                '	  <div></div>',
-                                '	  <div></div>',
-                                '	  <div></div>',
+                    loading += ['<div id="img' + i + '">',
+                                '	<div class="loading">',
+                                '		<div class="line-scale">',
+                                '		  <div></div>',
+                                '		  <div></div>',
+                                '		  <div></div>',
+                                '		  <div></div>',
+                                '		  <div></div>',
+                                '		</div>',
                                 '	</div>',
                                 '</div>'].join("");
                 }
@@ -81,38 +87,70 @@
             },
             success: function(json){
                 console.log(json);
-                var ocrInfo = json.ocrInfo;
-                var idCards = '';
-                for(var i = 0;i < ocrInfo.length;i ++){
-                    idCards += ['<div class="idCard">',
-                                '		<div class="text">',
-                                '			<div class="name">',
-                                '				<div class="n">姓名</div><div class="v" id="name">' + ocrInfo[i].name + '</div>',
-                                '			</div>',
-                                '			<div class="gender-nation">',
-                                '				<div class="n">性别</div><div class="v" id="gender">' + ocrInfo[i].gender + '</div>',
-                                '				<div class="n">民族</div><div class="v" id="nation">' + ocrInfo[i].nation + '</div>',
-                                '			</div>',
-                                '			<div class="birth">',
-                                '				<div class="n">出生</div>',
-                                '				<div class="v-y" id="year">' + ocrInfo[i].year + '</div><div class="n-y">年</div>',
-                                '				<div class="v-m" id="month">' + ocrInfo[i].month + '</div><div class="n-m">月</div>',
-                                '				<div class="v-d" id="day">' + ocrInfo[i].day + '</div><div class="n-d">日</div>',
-                                '			</div>',
-                                '			<div class="address">',
-                                '				<div class="n">住址</div><div class="v" id="address">' + ocrInfo[i].address + '</div>',
-                                '			</div>',
-                                '		</div>',
-                                '		<div class="img"></div>',
-                                '		<div class="code">',
-                                '			<div class="n">公民身份号码</div><div class="v" id="idCode">' + ocrInfo[i].idCode + '</div>',
-                                '		</div>',
-                                '	</div>'].join("");
-                }
-                $('#idCard').html(idCards);
             }
         })
     }
 
+  	//开启连接
+    connect();
+
+    //websocket连接
+    function connect() {
+        var socket = new SockJS('/opencv-ocr-ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (result) {
+        	console.log('Connected: ' + result);
+        	//订阅
+            stompClient.subscribe('/user/' + uuid + '/idCard', function (data) {
+                var img = JSON.parse(data.body);
+                var imgHtml = ['<div class="idCard">',
+                               '		<div class="text">',
+                               '			<div class="name">',
+                               '				<div class="n">姓名</div><div class="v" id="name">' + img.name + '</div>',
+                               '			</div>',
+                               '			<div class="gender-nation">',
+                               '				<div class="n">性别</div><div class="v" id="gender">' + img.gender + '</div>',
+                               '				<div class="n">民族</div><div class="v" id="nation">' + img.nation + '</div>',
+                               '			</div>',
+                               '			<div class="birth">',
+                               '				<div class="n">出生</div>',
+                               '				<div class="v-y" id="year">' + img.year + '</div><div class="n-y">年</div>',
+                               '				<div class="v-m" id="month">' + img.month + '</div><div class="n-m">月</div>',
+                               '				<div class="v-d" id="day">' + img.day + '</div><div class="n-d">日</div>',
+                               '			</div>',
+                               '			<div class="address">',
+                               '				<div class="n">住址</div><div class="v" id="address">' + img.address + '</div>',
+                               '			</div>',
+                               '		</div>',
+                               '		<div class="img"></div>',
+                               '		<div class="code">',
+                               '			<div class="n">公民身份号码</div><div class="v" id="idCode">' + img.idCode + '</div>',
+                               '		</div>',
+                               '	</div>'].join("");
+                $('#' + img.imgId).html(imgHtml);
+            });
+        });
+    }
+
+    function send(message){
+    	var params = {
+    			uuid : uuid,
+    			text : $('#text').val()
+    	}
+    	stompClient.send("/ocr/send", {}, JSON.stringify(params));
+    }
+
+    //生成唯一ID
+    function uuid() {
+    	var d = new Date().getTime();
+    	var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    	  	var r = (d + Math.random() * 16) % 16 | 0;
+    	  	d = Math.floor(d / 16);
+    	  	return (c == 'x' ? r : (r&0x3 | 0x8)).toString(16);
+    	});
+    	return uuid;
+    };
+    //jquery.barrager.js 弹幕
+    
 </script>
 </html>

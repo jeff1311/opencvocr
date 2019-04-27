@@ -1,4 +1,4 @@
-package com.ljf.opencvocr.service;
+package com.ljf.opencvocr.util;
 
 import java.awt.Component;
 import java.awt.image.BufferedImage;

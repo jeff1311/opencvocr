@@ -19,6 +19,7 @@ body{
     background-color:#00BFFF;
     color:white;
     outline:none;
+    border-radius:3px;
     box-shadow: 0 0 10px rgba(128,128,128,0.3);
     -webkit-transition: all 1s ease 0s;
     -moz-transition: all 1s ease 0s;
@@ -42,7 +43,7 @@ body{
     width: 500px;
     height: 300px;
     /*border: 1px solid grey;*/
-    /* border-radius: 15px; */
+    border-radius: 15px;
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(128,128,128,0.3);
     overflow: hidden;
@@ -186,6 +187,7 @@ body{
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(128,128,128,0.3);
     overflow: hidden;
+    border-radius:15px;
     -webkit-transition: all 1s ease 0s;
     -moz-transition: all 1s ease 0s;
     -ms-transition: all 1s ease 0s;

@@ -5,6 +5,7 @@ import org.opencv.core.Range;
 import org.opencv.core.Rect;
 import org.opencv.imgcodecs.Imgcodecs;
 
+import com.ljf.opencvocr.util.ImgUtil;
 import com.ljf.opencvocr.util.Util;
 
 public class MatTest {

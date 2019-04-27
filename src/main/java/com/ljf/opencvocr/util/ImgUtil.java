@@ -1,4 +1,4 @@
-package com.ljf.opencvocr.service;
+package com.ljf.opencvocr.util;
 
 import org.opencv.core.*;
 import org.opencv.core.Point;
