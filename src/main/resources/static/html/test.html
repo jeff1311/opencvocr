@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="/css/cropper.css">
+<link rel="stylesheet" href="/icomoon/style.css">
+<style type="text/css">
+#before,#after{
+	width:600px;
+}
+#main{
+	margin:0 auto;
+	margin-top:50px;
+	width:600px;
+}
+#file{
+	display:none;
+}
+.btn{
+	margin-top:10px;
+	margin-right:10px;
+	padding:0;
+	width:45px;
+	height:45px;
+	line-height:45px;
+	cursor:pointer;
+	float:left;
+	color:white;
+	text-align:center;
+	background-color:#d0d0d0;
+	border-radius:4px;
+}
+.show{
+	margin:0;
+	margin-top:10px;
+}
+.green{
+	background-color:#66CD00;
+}
+.blue{
+	background-color:#63B8FF;
+}
+.cropper{
+	width:600px;
+}
+.icon{
+	font-size:20px;
+	color:white;
+	cursor:pointer;
+}
+.icon:hover{
+	color:#63B8FF;
+}
+.panel{
+	width:600px;
+	height:65px;
+}
+</style>
+</head>
+<body>
+
+<div id="main">
+	<input type="file" id="file">
+	
+	<div class="panel">
+		<div class="btn" id="select">	
+			<span class="icon icon-image" title="选择"></span>
+		</div>
+		<div class="btn" id="reset">	
+			<span class="icon icon-refresh-cw" title="复位"></span>
+		</div>
+		<div class="btn" id="leftRotate">	
+			<span class="icon icon-rotate-ccw" title="左旋"></span>
+		</div>
+		<div class="btn" id="rightRotate">	
+			<span class="icon icon-rotate-cw" title="右旋"></span>
+		</div>
+		<div class="btn" id="crop-upload">
+			<span class="icon icon-share" title="裁剪&上传"></span>
+		</div>
+	</div>
+
+	<div id="cropper-container"></div>
+	
+	<div id="croppered"><img></div>
+	
+</div>
+
+</body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script type="text/javascript" src="/js/cropper.js"></script>
+<script type="text/javascript">
+
+//原生JS版上传图片预览
+var srcBase64;
+document.getElementById('file').onchange = function(){
+    //创建FileReader
+    var re = new FileReader();
+    //读取文件
+    re.readAsDataURL(this.files[0]);
+    //读取完成后显示BASE64
+    re.onload = function(){
+    	$('#croppered > img').attr('src','');
+    	srcBase64 = re.result;
+        upload(re.result);
+    }
+}
+
+$('#select').click(function(){
+	$('#file').click();
+});
+
+$('#submit').click(function(){
+	upload();
+});
+
+$('#reset').click(function(){
+	$('#cropper').cropper('setCropBoxData',{
+		"left": initParams.crop.x, 
+		"top": initParams.crop.y, 
+		"width": initParams.crop.w, 
+		"height": initParams.crop.h
+	});
+	$('#cropper').cropper('replace',initParams.imgSrc,true);
+});
+
+$('#cropUnlock').click(function(){
+	$('#cropper').cropper('enable');
+});
+
+$('#leftRotate').click(function(){
+	$('#cropper').cropper('rotate',-1);
+});
+
+$('#rightRotate').click(function(){
+	$('#cropper').cropper('rotate',1);
+});
+
+$('#crop-upload').click(function(){
+	var cas = $('#cropper').cropper('getCroppedCanvas',{
+		width: 600,
+	  	/* height: 90,
+	  	minWidth: 256,
+	  	minHeight: 256,
+	  	maxWidth: 4096,
+	  	maxHeight: 4096,
+	  	fillColor: '#fff',
+	  	imageSmoothingEnabled: false,
+	  	imageSmoothingQuality: 'high' */
+	});
+    //var base64url = cas.toDataURL('image/jpeg');
+  	//生成Blob的图片格式
+    cas.toBlob(function (e) {
+        console.log(e);
+        var formData = new FormData();
+        formData.append('img',e);
+        formData.append('storagePath',"/1087/");
+        $.ajax({
+        	url : '/servlet/blob/upload',
+        	type : 'post',
+        	data : formData,
+        	contentType:false,
+            processData:false,
+            dataType : 'json',
+            success:function(info){
+            	console.log(info);
+            	$('#croppered > img').attr('src',info.baseImgPath + info.storageName);
+            }
+        });
+    });
+    //$('#croppered').html(cas);  //在body显示出canvas元素
+    
+});
+
+var initParams;
+function upload(imgSrc){
+    
+    var formData = new FormData();
+    formData.append('img',$('#file').get(0).files[0]);
+    $.ajax({
+        url:'/servlet/opencv/crop',
+        type:'post',
+        data:formData,
+        contentType:false,
+        processData:false,
+        dataType : 'json',
+        success:function(info){    
+            //console.log(info);
+            if(info.code == 200){
+            	var params = {
+            			crop : {            				
+	            			x : info.x,
+	            			y : info.y,
+	            			w : info.w,
+	            			h : info.h
+            			},
+            			id : 'cropper',
+            			//src : info.baseImgPath + info.srcTempName,//压缩图片地址
+            			srcTempHeight : info.srcTempHeight,//压缩图片的高度
+            			imgSrc : imgSrc
+            	}
+            	initParams = params;
+            	cropper(params);
+            }else{
+            	alert(info.errMsg);
+            }
+        },
+        error:function(err){
+            console.log(err);
+        }
+    });
+    
+}
+
+function cropper(params){
+	var cropHtml = ['<div class="cropper">',
+	               '	<img id="cropper">',
+	               '</div>',
+	               '<img id="after" class="show">'].join("");
+	$('#cropper-container').html(cropHtml);
+	console.log(params);
+	$('#' + params.id).cropper({
+	  	viewMode : 1,//样式
+	  	aspectRatio : NaN,//裁剪框比例 NaN
+	  	autoCrop : true,//是否显示裁剪框
+	  	zoomable : true,//是否允许放大缩小
+	  	cropParam : params.crop,//裁剪框初始化
+	  	minContainerWidth : 600,//容器最小宽度
+	  	minContainerHeight : params.srcTempHeight,//容器最小高度
+	  	crop : function(e) {//裁剪框发生变化执行的函数
+	  		//console.log(e);
+	  	}
+	});
+	$('#' + params.id).cropper('replace',params.imgSrc,true);
+}
+
+</script>
+</html>

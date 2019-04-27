@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>身份证识别</title>
+    <link rel="stylesheet" type="text/css" href="/css/loaders.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/ocridcard.css"/>
+</head>
+<body>
+    <div class="main">
+        <input type="file" id="img" multiple="multiple">
+        <button class="select" id="select">选择图片</button>
+        <img id="view">
+        <div id="idCard"></div>
+    </div>
+</body>
+<script type="text/javascript" src="/js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">
+
+$('#select').click(function(){
+	$('#img').click();
+})
+
+document.getElementById('img').onchange = function(){
+	$('#idCard').html('');
+	console.log(this.files.length);
+	var files = this.files;
+    var file = this.files[0];
+    //创建FileReader
+    var re = new FileReader();
+    //读取文件
+    re.readAsDataURL(file);
+    //读取完成后显示BASE64
+    re.onload = function(){
+        $('#view').attr('src',re.result);
+        ocr(files);
+    }
+
+}
+
+function ocr(files){
+    var data = new FormData();
+    data.append('test','true');
+    for(var i = 0;i < files.length;i ++){
+        data.append('file' + i, files[i]); // file 对象
+    }
+    // 提交
+    $.ajax({
+        url: '/ocr',
+        type: 'post',
+        data: data,
+        processData: false, // 默认 | 不处理数据
+        contentType: false,// 默认 | 不设置内容类型
+        dataType: 'json',
+        beforeSend: function(){
+        	var loading = ['<div class="loading">',
+        	               '	<div class="line-scale">',
+        	               '	  <div></div>',
+        	               '	  <div></div>',
+        	               '	  <div></div>',
+        	               '	  <div></div>',
+        	               '	  <div></div>',
+        	               '	</div>',
+        	               '</div>'].join("");
+            $('#idCard').html(loading);
+		},
+        success: function(json){
+            console.log(json);
+            var ocrInfo = json.ocrInfo[0];
+            var idCard = ['<div class="idCard">',
+                          '		<div class="text">',
+                          '			<div class="name">',
+                          '				<div class="n">姓名</div><div class="v" id="name">' + ocrInfo.name + '</div>',
+                          '			</div>',
+                          '			<div class="gender-nation">',
+                          '				<div class="n">性别</div><div class="v" id="gender">' + ocrInfo.gender + '</div>',
+                          '				<div class="n">民族</div><div class="v" id="nation">' + ocrInfo.nation + '</div>',
+                          '			</div>',
+                          '			<div class="birth">',
+                          '				<div class="n">出生</div>',
+                          '				<div class="v-y" id="year">' + ocrInfo.year + '</div><div class="n-y">年</div>',
+                          '				<div class="v-m" id="month">' + ocrInfo.month + '</div><div class="n-m">月</div>',
+                          '				<div class="v-d" id="day">' + ocrInfo.day + '</div><div class="n-d">日</div>',
+                          '			</div>',
+                          '			<div class="address">',
+                          '				<div class="n">住址</div><div class="v" id="address">' + ocrInfo.address + '</div>',
+                          '			</div>',
+                          '		</div>',
+                          '		<div class="img"></div>',
+                          '		<div class="code">',
+                          '			<div class="n">公民身份号码</div><div class="v" id="idCode">' + ocrInfo.idCode + '</div>',
+                          '		</div>',
+                          '	</div>'].join("");
+            $('#idCard').html(idCard);
+        }
+    })
+}
+
+</script>
+</html>

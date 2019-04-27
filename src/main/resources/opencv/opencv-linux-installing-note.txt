@@ -1,0 +1,141 @@
+0.升级jdk到1.8
+1.安装依赖库
+1）查看系统多少位getconf LONG_BIT
+2）查看系统版本cat /proc/version
+3）安装依赖库
+yum groupinstall "Development Tools"
+
+yum install cmake gcc gcc-c++ gtk2-devel gimp-devel gimp-devel-tools gimp-help-browser zlib-devel libtiff-devel libjpeg-devel libpng-devel gstreamer-devel libavc1394-devel libraw1394-devel libdc1394-devel jasper-devel jasper-utils swig python libtool nasm
+
+yum install gtk2 gtk2-devel gtk2-devel-docs
+
+yum install ant(1.7以上)
+
+2.升级cmake 3.5.1以上
+1）把文件夹移至/opt
+mv cmake-3.13.2 /opt
+2）创建软连接
+ln -sf /opt/cmake-3.13.2/bin/* /usr/bin/
+
+3.安装opencv
+1）创建一个临时文件夹release（名字随意），mkdir release
+2）cd release
+3）配置cmake [-参数] [CMakeLists.txt路径]
+
+#cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_INSTALL_PREFIX=/usr/local/opencv ..
+#cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_PROTOBUF=OFF ..
+#-D WITH_PROTOBUF=OFF
+#cmake -D WITH_TBB=ON -D WITH_EIGEN=ON -D BUILD_DOCS=ON -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_EXAMPLES=OFF -D WITH_OPENCL=OFF -D WITH_CUDA=OFF -D BUILD_opencv_gpu=OFF -D BUILD_opencv_gpuarithm=OFF -D #BUILD_opencv_gpubgsegm=OFF -D BUILD_opencv_gpucodec=OFF -D BUILD_opencv_gpufeatures2d=OFF -D BUILD_opencv_gpufilters=OFF -D BUILD_opencv_gpulegacy=OFF -D BUILD_opencv_gpuoptflow=OFF -D BUILD_opencv_gpustereo=OFF -D #BUILD_opencv_gpuwarping=OFF -D BUILD_opencv_videoio=OFF -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local ..
+
+cd opencv
+mkdir build
+cd build
+cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ..
+make
+make install
+
+配置 java.library.path(/etc/profile)
+LD_LIBRARY_PATH=/usr/local/lib
+export LD_LIBRARY_PATH
+
+
+
+yum localinstall –nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+yum localinstall –nogpgcheck https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-7.noarch.rpm
+rpm –import http://li.nux.ro/download/nux/RPM-GPG-KEY-nux.ro
+rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-1.el7.nux.noarch.rpm
+
+
+
+
+
+
+
+
+
+
+
+网上搜了一下，发现安装gtk+-2.0不是一件容易的事，后来无意发现一个帖子挺不错，内容如下：
+No package ‘libgnomeui-2.0′ found
+No package ‘gtk+-2.0′ found
+No package ‘glib-2.0′ found
+
+我尝试了yum install libgnomeui,但是提示我已经安装过了，经过google，发现要安装的是libgnomeui-devel
+解决：yum install libgnomeui-devel
+
+
+转自：http://cchxm1978.blog.163.com/blog/static/35428253201010298454394/
+
+#查找删除
+#find . -name "*libopencv*" | xargs rm -f
+
+
+
+更新python
+1.下载Python-2.7.3
+#wget http://python.org/ftp/python/2.7.3/Python-2.7.3.tar.bz2
+
+2.解压
+#tar -jxvf Python-2.7.3.tar.bz2
+
+3.更改工作目录
+#cd Python-2.7.3
+
+4.安装
+#./configure
+#make all
+#make install
+#make clean
+#make distclean
+
+5.查看版本信息
+#/usr/local/bin/python2.7 -V
+
+6.建立软连接，使系统默认的 python指向 python2.7
+#mv /usr/bin/python /usr/bin/python2.6.6
+#ln -s /usr/local/bin/python2.7 /usr/bin/python
+
+7.重新检验Python 版本
+#python -V
+
+8解决系统 Python 软链接指向 Python2.7 版本后，因为yum是不兼容 Python 2.7的，所以yum不能正常工作，我们需要指定 yum 的Python版本
+#vi /usr/bin/yum
+
+
+将文件头部的
+#!/usr/bin/python
+
+改成
+#!/usr/bin/python2.6.6
+
+
+http://www.zhangchun.org/the-centos6-3-upgrade-python-to-2-7-3-
+
+这篇教程就到这里了，但是不久就突然发现输入法图标不见了，然后打字没有候选框！iBus 崩了！再次进行搜索，又是版本问题?iBus也是不支持Python2.7的啊！
+
+于是。。。
+
+
+
+9.配置iBus
+
+分别用 vi 打开下面两个文件，找到?exec python 那一行，把exec python 改为?exec python2.6 保存，退出。iBus在重启后就恢复正常了！是不是很开心？
+
+#vi /usr/bin/ibus-setup
+#vi/usr/libexec/ibus-ui-gtk
+
+
+
+#软连接
+cd /usr/bin
+ls python*
+看有几个python
+ln -s python2.6 python
+#ln -s /usr/local/bin/python2.7 python
+
+
+
+set JAVA_HOME=/usr/java/jdk1.8.0_161
+
+export JAVA_HOME=/usr/java/jdk1.8.0_161
+export JRE_HOME=/usr/java/jdk1.8.0_161/jre

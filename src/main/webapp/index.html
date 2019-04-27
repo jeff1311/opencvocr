@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>opencv-ocr</title>
+</head>
+<body>
+	<input type="text" id="text">
+	<button onclick="send()">发送</button>
+</body>
+<script src="/webjars/jquery/jquery.min.js"></script>
+<script src="/webjars/sockjs-client/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/stomp.min.js"></script>
+<script type="text/javascript">
+//开启连接
+connect();
+
+var uuid = uuid();
+console.log(uuid);
+
+//websocket连接
+function connect() {
+    var socket = new SockJS('/opencv-ocr-ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (result) {
+    	console.log('Connected: ' + result);
+    	//订阅
+        stompClient.subscribe('/user/' + uuid + '/test', function (data) {
+            console.log(data.body);
+        });
+    });
+}
+
+function send(message){
+	var params = {
+			uuid : uuid,
+			text : $('#text').val()
+	}
+	stompClient.send("/ocr/send", {}, JSON.stringify(params));
+}
+
+//生成唯一ID
+function uuid() {
+	var d = new Date().getTime();
+	var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	  	var r = (d + Math.random() * 16) % 16 | 0;
+	  	d = Math.floor(d / 16);
+	  	return (c == 'x' ? r : (r&0x3 | 0x8)).toString(16);
+	});
+	return uuid;
+};
+//jquery.barrager.js 弹幕
+</script>
+</html>

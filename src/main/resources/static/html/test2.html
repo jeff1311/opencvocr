@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>OCR</title>
+<link rel="stylesheet" href="/css/cropper.css">
+<style type="text/css">
+.main{
+	margin:0 auto;
+	margin-top:100px;
+	width:800px;
+}
+#file{
+	display:none;
+}
+.cropper{
+	width:600px;
+}
+</style>
+</head>
+<body>
+<div class="main">
+	<input type="file" id="file">
+	<button id="select">选择图片</button>
+	<button id="clear">清空裁剪</button>
+	<button id="ocr">识别文字</button>
+	<div id="cropper-container"></div>
+	<div id="ocrtext"></div>
+</div>
+
+</body>
+<script type="text/javascript" src="/js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="/js/cropper.js"></script>
+<script type="text/javascript">
+
+$('#select').click(function(){
+	$('#file').click();
+})
+$('#clear').click(function(){
+	$('#cropper').cropper('clear');
+})
+$('#ocr').click(function(){
+	var cas = $('#cropper').cropper('getCroppedCanvas');
+    //var base64url = cas.toDataURL('image/jpeg');
+  	//生成Blob的图片格式
+    cas.toBlob(function (e) {
+        console.log(e);
+        var formData = new FormData();
+        formData.append('img',e);
+        formData.append('storagePath',"/temp/");
+        $.ajax({
+        	url : '/ocr',
+        	type : 'post',
+        	data : formData,
+        	contentType:false,
+            processData:false,
+            dataType : 'json',
+            success:function(info){
+            	console.log(info);
+            	$('#ocrtext').html(info.ocrtext);
+            }
+        });
+    });
+})
+document.getElementById('file').onchange = function(){
+	//创建FileReader
+    var re = new FileReader();
+    //读取文件
+    re.readAsDataURL(this.files[0]);
+    //读取完成后显示BASE64
+    re.onload = function(){
+    	var img = new Image();
+        img.src = this.result;
+        img.onload = function (argument) {
+        	console.log(this.width +'----------'+this.height)  //这里就是上传图片的宽和高了
+        	var width = 800;
+        	var height = width * (this.height / this.width);
+        	console.log(height);
+        	var params = {
+        			id : 'cropper',
+        			width : width,
+        			height : height,
+        			imgSrc : this.src
+        	}
+        	cropper(params);
+        }
+    	
+    }
+}
+
+function cropper(params){
+	var cropHtml = ['<div class="cropper">',
+	               '	<img id="cropper">',
+	               '</div>'].join("");
+	$('#cropper-container').html(cropHtml);
+	console.log(params);
+	$('#' + params.id).cropper({
+	  	viewMode : 1,//样式
+	  	aspectRatio : NaN,//裁剪框比例 NaN
+	  	autoCrop : true,//是否显示裁剪框
+	  	zoomable : true,//是否允许放大缩小
+	  	//cropParam : params.crop,//裁剪框初始化
+	  	minContainerWidth : params.width,//容器最小宽度
+	  	minContainerHeight : params.height,//容器最小高度
+	  	crop : function(e) {//裁剪框发生变化执行的函数
+	  		console.log(e);
+	  	}
+	});
+	$('#' + params.id).cropper('replace',params.imgSrc,true);
+}
+</script>
+</html>
