@@ -46,7 +46,7 @@ body{
     border-radius: 15px;
     background-color: #ffffff;
     box-shadow: 0 0 10px rgba(128,128,128,0.3);
-    overflow: hidden;
+    overflow: auto;
     -webkit-transition: all 1s ease 0s;
     -moz-transition: all 1s ease 0s;
     -ms-transition: all 1s ease 0s;
@@ -55,6 +55,10 @@ body{
 }
 .idCard:hover{
     box-shadow: 0 0 10px rgba(128,128,128,1);
+}
+.img-border{
+	overflow:auto;
+	float:left;
 }
 .name .n,.gender-nation .n,.birth .n,.address .n{
     /*margin-right:20px;*/
@@ -203,4 +207,21 @@ body{
 }
 .line-scale > div{
     background-color:#00BFFF;
+}
+@keyframes shadowPulse {
+    0%{
+    	box-shadow: 0 0 10px rgba(0,191,255,0.3);
+    }
+    50%{
+    	box-shadow: 0 0 10px rgba(0,191,255,1);
+    }
+    100%{
+        box-shadow: 0 0 10px rgba(128,128,128,0.3);
+    }
+}
+.shadow-pulse {
+    animation-name: shadowPulse;
+    animation-duration: 2s;
+    animation-iteration-count: 1;
+    animation-timing-function: linear;
 }
