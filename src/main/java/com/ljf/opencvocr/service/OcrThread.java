@@ -1,6 +1,5 @@
 package com.ljf.opencvocr.service;
 
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
