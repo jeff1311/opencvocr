@@ -22,10 +22,10 @@ public class OcrTaskThread extends Thread {
     public void run() {
         System.out.println(Thread.currentThread().getName());
         for(int i = 0;i < imgs.size();i ++){
-            JSONObject info = OCR.execute(imgs.get(i).getImg(),false);
-            info.put("imgId", imgs.get(i).getImgId());
+            JSONObject info = OCR.execute(imgs.get(i).getImg(),"idCard",false);
             if(uuid != null){
-            	sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
+                info.put("imgId", imgs.get(i).getImgId());
+                sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
             }
         }
     }

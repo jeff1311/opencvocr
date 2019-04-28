@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OCR</title>
+    <link rel="stylesheet" type="text/css" href="/css/loaders.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/ocridcard.css"/>
+    <style>
+        *{
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        .main{
+            width:1000px;
+        }
+    </style>
+</head>
+<body>
+<div class="main">
+    <input type="file" id="img" multiple="multiple">
+    <button class="select" id="select">选择图片</button>
+    <div id="text"></div>
+</div>
+</body>
+<script src="/webjars/jquery/jquery.min.js"></script>
+<script src="/webjars/sockjs-client/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/stomp.min.js"></script>
+<script type="text/javascript">
+    var uuid = uuid();
+
+    $('#select').click(function(){
+        $('#img').click();
+    })
+
+    document.getElementById('img').onchange = function(){
+        $('#text').html('');
+        console.log(this.files.length);
+        var files = this.files;
+        var file = this.files[0];
+        //创建FileReader
+        var re = new FileReader();
+        //读取文件
+        re.readAsDataURL(file);
+        //读取完成后显示BASE64
+        re.onload = function(){
+            ocr(files);
+        }
+
+    }
+
+    function ocr(files){
+        var data = new FormData();
+        data.append('uuid',uuid);
+        data.append('test',1);
+        for(var i = 0;i < files.length;i ++){
+            data.append('img' + i, files[i]); // file 对象
+        }
+        // 提交
+        $.ajax({
+            url: '/ocr',
+            type: 'post',
+            data: data,
+            processData: false, // 默认 | 不处理数据
+            contentType: false,// 默认 | 不设置内容类型
+            dataType: 'json',
+            beforeSend: function(){
+
+            },
+            success: function(result){
+                console.log(result.text);
+                if(result.code == 200){
+                    $('#text').html(result.text);
+                }else{
+                    alert(errMsg);
+                }
+            }
+        })
+    }
+
+    //开启连接
+    connect();
+
+    //websocket连接
+    function connect() {
+        var socket = new SockJS('/opencv-ocr-ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (result) {
+            console.log('Connected: ' + result);
+            //订阅
+            stompClient.subscribe('/user/' + uuid + '/idCard', function (data) {
+
+            });
+        });
+    }
+
+    function send(message){
+        var params = {
+            uuid : uuid,
+            text : $('#text').val()
+        }
+        stompClient.send("/ocr/send", {}, JSON.stringify(params));
+    }
+
+    //生成唯一ID
+    function uuid() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c == 'x' ? r : (r&0x3 | 0x8)).toString(16);
+        });
+        return uuid;
+    };
+
+    //jquery.barrager.js 弹幕
+
+</script>
+</html>

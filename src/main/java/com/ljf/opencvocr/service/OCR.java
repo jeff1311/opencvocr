@@ -5,7 +5,6 @@ import com.ljf.opencvocr.util.Constants;
 import com.ljf.opencvocr.util.IdCardUtil;
 import com.ljf.opencvocr.util.ImgUtil;
 import com.ljf.opencvocr.util.Util;
-
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -32,7 +31,17 @@ public class OCR {
 		System.load(opencvLib);
 	}
 
-	public static JSONObject execute(BufferedImage srcBi, boolean test){
+	public static JSONObject execute(BufferedImage srcBi,String type, boolean test){
+	    JSONObject result = null;
+        if("idCard".equals(type)){
+            result = idCard(srcBi,test);
+        }else{
+            result = ocr(srcBi,test);
+        }
+        return result;
+	}
+
+	private static JSONObject idCard(BufferedImage srcBi,boolean test){
         //创建一个Mat,颜色为白色
         Mat src = new Mat(srcBi.getHeight(), srcBi.getWidth(), CvType.CV_8UC3,new Scalar(255, 255, 255));
         //BufferedImage转Mat
@@ -48,48 +57,47 @@ public class OCR {
             }
         }
 
-		//根据人脸识别裁剪身份证以内的区域
-		Map<String, Mat> crop = Face.idcardCrop(src,false);
-		Mat cropSrc = crop.get("crop");
-		Mat cropSrc2 = null;
-		if(test){
+        //根据人脸识别裁剪身份证以内的区域
+        Map<String, Mat> crop = Face.idcardCrop(src,false);
+        Mat cropSrc = crop.get("crop");
+        Mat cropSrc2 = null;
+        if(test){
             cropSrc2 = cropSrc.clone();
         }
-		Mat key = crop.get("key");
-		//灰度化
-		Mat gray = key;
-		Imgproc.cvtColor(gray, gray, Imgproc.COLOR_BGR2GRAY);
+        Mat key = crop.get("key");
+        //灰度化
+        Mat gray = key;
+        Imgproc.cvtColor(gray, gray, Imgproc.COLOR_BGR2GRAY);
         if(test){
             Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/e.jpg"), gray);
         }
 
-		//二值化（自适应）
-		int blockSize = 25;
-		int threshold = 35;
-		Imgproc.adaptiveThreshold(gray, gray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, blockSize, threshold);
-		
-		//过滤杂纹
+        //二值化（自适应）
+        int blockSize = 25;
+        int threshold = 35;
+        Imgproc.adaptiveThreshold(gray, gray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, blockSize, threshold);
+
+        //过滤杂纹
 //		Imgproc.medianBlur(gray, gray,3);
         if(test){
             Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/f.jpg"), gray);
         }
 
-		//膨胀（白色膨胀）
-		Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));//使用3*3交叉内核
-		Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 20);//以这个内核为中心膨胀N倍
+        //膨胀（白色膨胀）
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));//使用3*3交叉内核
+        Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 20);//以这个内核为中心膨胀N倍
         if(test){
             Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/g.jpg"), gray);
         }
 
-		//腐蚀（黑色膨胀）
-		Mat kernel3 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));//使用3*3交叉内核
-		Imgproc.erode(gray, gray, kernel3, new Point(-1, -1), 10);
+        //腐蚀（黑色膨胀）
+        Imgproc.erode(gray, gray, kernel, new Point(-1, -1), 10);
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Util.mkDirs(Constants.disk + "/ocr/test/h.jpg")), gray);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/h.jpg"), gray);
         }
 
-		//查找轮廓
-		ArrayList<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+        //查找轮廓
+        ArrayList<MatOfPoint> contours = new ArrayList<MatOfPoint>();
         Mat hierarchy = new Mat();
         Imgproc.findContours(gray, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -150,9 +158,46 @@ public class OCR {
         } catch (TesseractException e) {
             e.printStackTrace();
         }
-        
-		return IdCardUtil.filterOcrInfo(result);
-	}
+
+        return IdCardUtil.filterOcrInfo(result);
+    }
+
+    private static JSONObject ocr(BufferedImage srcBi,boolean test){
+        //创建一个Mat,颜色为白色
+        Mat src = new Mat(srcBi.getHeight(), srcBi.getWidth(), CvType.CV_8UC3,new Scalar(255, 255, 255));
+        //BufferedImage转Mat
+        for(int y = 0;y < src.rows();y ++){
+            for(int x = 0;x < src.cols();x ++){
+                int rgba = srcBi.getRGB(x,y);
+                Color col = new Color(rgba, true);
+                int r = col.getRed();
+                int g = col.getGreen();
+                int b = col.getBlue();
+                double[] data = {b,g,r};
+                src.put(y,x,data);
+            }
+        }
+        //OCR
+        ITesseract instance = new Tesseract();
+        //设置训练库的位置
+        String dataPath = Util.getClassPath() + "tessdata";
+        instance.setDatapath(dataPath);
+        instance.setLanguage("chi_sim");//chi_sim eng
+        String text = null;
+        BufferedImage binary = ImgUtil.Mat2BufImg(src, ".jpg");
+        try {
+            text =  instance.doOCR(binary);
+        } catch (TesseractException e) {
+            e.printStackTrace();
+        }
+        System.out.println(text);
+        text = text.replace("\n","<br>");
+        text = text.replace(" ","&nbsp;");
+        JSONObject json = new JSONObject();
+        json.put("code",200);
+        json.put("text",text);
+        return json;
+    }
 
     public static void clean(Mat src,int size){
         //轮廓检测

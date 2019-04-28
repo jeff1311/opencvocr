@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,8 @@ public class OcrController {
 	
 	private List<Img> images = null;
 
-	@RequestMapping("/ocr")
-	public void ocr(HttpServletRequest request,HttpServletResponse response){
+	@RequestMapping("/ocr/idCard")
+	public void idCard(HttpServletRequest request,HttpServletResponse response){
 //		Util.cleanFiles(Constants.disk + "/ocr/test");
         JSONObject result = new JSONObject();
         String code,errMsg = null;
@@ -101,9 +102,13 @@ public class OcrController {
             pool.shutdownNow();
             code = "200";
         }else if(images.size() == 1){
-            JSONObject info = OCR.execute(images.get(0).getImg(),false);
-            info.put("imgId", images.get(0).getImgId());
-            sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
+            JSONObject info = OCR.execute(images.get(0).getImg(),"idCard",false);
+            if(uuid != null){
+                info.put("imgId", images.get(0).getImgId());
+                sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
+            }else{
+                ocrInfo.add(info);
+            }
             code = "200";
         }else{
             code = "500";
@@ -115,5 +120,13 @@ public class OcrController {
         result.put("ocrInfo", ocrInfo);
         Util.returnInfo(response, result);
 	}
-	
+
+	@RequestMapping("/ocr")
+	public void ocr(HttpServletRequest request,HttpServletResponse response){
+        Model info = Upload.getInfo(request);
+        BufferedImage img = info.getImages().get(0).getImg();
+        JSONObject result = OCR.execute(img, "", true);
+        Util.returnInfo(response, result);
+    }
+
 }

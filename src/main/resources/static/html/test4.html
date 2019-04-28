@@ -61,7 +61,7 @@
         }
         // 提交
         $.ajax({
-            url: '/ocr',
+            url: '/ocr/idCard',
             type: 'post',
             data: data,
             processData: false, // 默认 | 不处理数据
@@ -145,7 +145,7 @@
     			uuid : uuid,
     			text : $('#text').val()
     	}
-    	stompClient.send("/ocr/send", {}, JSON.stringify(params));
+    	stompClient.send("/ocr/recognize", {}, JSON.stringify(params));
     }
 
     //生成唯一ID
