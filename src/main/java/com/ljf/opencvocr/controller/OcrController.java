@@ -92,9 +92,9 @@ public class OcrController {
             //关闭线程池，不再接新任务
             pool.shutdown();
             try {
-                //等待任务完成，超时时间设为60秒
-                pool.awaitTermination(60, TimeUnit.SECONDS);
-                Thread.sleep(100);//等待0.1秒让websocket先行（前端显示效果）
+                //等待任务完成，超时时间设为180秒
+                pool.awaitTermination(180, TimeUnit.SECONDS);
+                Thread.sleep(500);//等待0.5秒让websocket先行（前端显示效果）
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
