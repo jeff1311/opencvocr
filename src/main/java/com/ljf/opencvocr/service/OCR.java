@@ -83,8 +83,9 @@ public class OCR {
             Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/f.jpg"), gray);
         }
 
-        //膨胀（白色膨胀）
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));//使用3*3交叉内核
+
+        //膨胀（白色膨胀）
         Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 20);//以这个内核为中心膨胀N倍
         if(test){
             Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/g.jpg"), gray);

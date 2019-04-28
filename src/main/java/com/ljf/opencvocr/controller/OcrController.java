@@ -36,7 +36,6 @@ public class OcrController {
         String code,errMsg = null;
         Model uploadInfo = Upload.getInfo(request);
         Map<String, String> params = uploadInfo.getParams();
-        String test = params.get("test");
         String uuid = params.get("uuid");
         List<Img> images = uploadInfo.getImages();
         List<JSONObject> ocrInfo = new ArrayList<JSONObject>();
