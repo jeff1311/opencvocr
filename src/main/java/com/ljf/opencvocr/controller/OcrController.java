@@ -29,8 +29,6 @@ public class OcrController {
 	@Autowired
 	SimpMessagingTemplate sm;
 	
-	private List<Img> images = null;
-
 	@RequestMapping("/ocr/idCard")
 	public void idCard(HttpServletRequest request,HttpServletResponse response){
 //		Util.cleanFiles(Constants.disk + "/ocr/test");
@@ -40,7 +38,7 @@ public class OcrController {
         Map<String, String> params = uploadInfo.getParams();
         String test = params.get("test");
         String uuid = params.get("uuid");
-        images = uploadInfo.getImages();
+        List<Img> images = uploadInfo.getImages();
         List<JSONObject> ocrInfo = new ArrayList<JSONObject>();
         //图片大于一使用多线程并行处理，小于一使用主线程处理
         if(images.size() > 1){
