@@ -12,8 +12,8 @@ public class OcrTaskThread extends Thread {
     private List<Img> imgs;
     private String uuid;
 
-    public OcrTaskThread(List<Img> images, String uuid, SimpMessagingTemplate sm){
-        this.imgs = images;
+    public OcrTaskThread(List<Img> imgs, String uuid, SimpMessagingTemplate sm){
+        this.imgs = imgs;
         this.uuid = uuid;
         this.sm = sm;
     }
