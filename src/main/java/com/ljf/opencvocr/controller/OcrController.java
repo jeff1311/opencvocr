@@ -1,5 +1,19 @@
 package com.ljf.opencvocr.controller;
 
+import com.alibaba.fastjson.JSONObject;
+import com.ljf.opencvocr.dao.Img;
+import com.ljf.opencvocr.dao.Model;
+import com.ljf.opencvocr.service.OCR;
+import com.ljf.opencvocr.service.OcrTaskThread;
+import com.ljf.opencvocr.service.Upload;
+import com.ljf.opencvocr.util.Util;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,21 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import com.alibaba.fastjson.JSONObject;
-import com.ljf.opencvocr.dao.Img;
-import com.ljf.opencvocr.dao.Model;
-import com.ljf.opencvocr.service.OcrThread;
-import com.ljf.opencvocr.service.Upload;
-import com.ljf.opencvocr.util.Util;
 
 @Controller
 public class OcrController {
@@ -31,89 +30,90 @@ public class OcrController {
 	
 	private List<Img> images = null;
 
-	private static List<JSONObject> ocrInfo = new ArrayList<JSONObject>();
-
 	@RequestMapping("/ocr")
 	public void ocr(HttpServletRequest request,HttpServletResponse response){
 //		Util.cleanFiles(Constants.disk + "/ocr/test");
+        JSONObject result = new JSONObject();
+        String code,errMsg = null;
         Model uploadInfo = Upload.getInfo(request);
         Map<String, String> params = uploadInfo.getParams();
         String test = params.get("test");
         String uuid = params.get("uuid");
         images = uploadInfo.getImages();
+        List<JSONObject> ocrInfo = new ArrayList<JSONObject>();
+        //图片大于一使用多线程并行处理，小于一使用主线程处理
+        if(images.size() > 1){
+            //线程池
+            int corePoolSize = images.size() <= 4 ? images.size() : 4;//线程池的基本大小
+            int maximumPoolSize = 4;//线程池中允许的最大线程数
+            int keepAliveTime = 10;//空闲线程等待新任务的最长时间（秒）
+            LinkedBlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();//队列
+            ExecutorService pool = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,keepAliveTime, TimeUnit.SECONDS, runnables);
 
-        if(ocrInfo.size() != 0){
-            ocrInfo.clear();
-        }
+            //每个线程的任务
+            List<Img> task1 = new ArrayList<Img>();
+            List<Img> task2 = new ArrayList<Img>();
+            List<Img> task3 = new ArrayList<Img>();
+            List<Img> task4 = new ArrayList<Img>();
 
-        //线程池
-        int corePoolSize = images.size() <= 4 ? images.size() : 4;//线程池的基本大小
-        int maximumPoolSize = 4;//线程池中允许的最大线程数
-        int keepAliveTime = 10;//空闲线程等待新任务的最长时间（秒）
-        LinkedBlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();//队列
-        ExecutorService executorService = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,keepAliveTime, TimeUnit.SECONDS, runnables);
-
-        //每个线程的任务
-        List<Img> task1 = new ArrayList<Img>();
-        List<Img> task2 = new ArrayList<Img>();
-        List<Img> task3 = new ArrayList<Img>();
-        List<Img> task4 = new ArrayList<Img>();
-
-        //任务分配
-        for(int i = 0;i < images.size();i ++){
-            Img img = images.get(i);
-            int n = i % 4;
-            switch(n){
-                case 0:
-                    task1.add(img);
-                    break;
-                case 1:
-                    task2.add(img);
-                    break;
-                case 2:
-                    task3.add(img);
-                    break;
-                case 3:
-                    task4.add(img);
-                    break;
+            //任务分配
+            for(int i = 0;i < images.size();i ++){
+                Img img = images.get(i);
+                int n = i % 4;
+                switch(n){
+                    case 0:
+                        task1.add(img);
+                        break;
+                    case 1:
+                        task2.add(img);
+                        break;
+                    case 2:
+                        task3.add(img);
+                        break;
+                    case 3:
+                        task4.add(img);
+                        break;
+                }
             }
-        }
 
-        //创建ocr对象
-        OcrThread ocr1 = new OcrThread(task1,ocrInfo,uuid,sm);
-        OcrThread ocr2 = new OcrThread(task2,ocrInfo,uuid,sm);
-        OcrThread ocr3 = new OcrThread(task3,ocrInfo,uuid,sm);
-        OcrThread ocr4 = new OcrThread(task4,ocrInfo,uuid,sm);
+            //创建ocr任务对象
+            OcrTaskThread ocr1 = new OcrTaskThread(task1,uuid,sm);
+            OcrTaskThread ocr2 = new OcrTaskThread(task2,uuid,sm);
+            OcrTaskThread ocr3 = new OcrTaskThread(task3,uuid,sm);
+            OcrTaskThread ocr4 = new OcrTaskThread(task4,uuid,sm);
 
-        //开启线程执行
-        executorService.execute(ocr1);
-        executorService.execute(ocr2);
-        executorService.execute(ocr3);
-        executorService.execute(ocr4);
+            //开启线程执行任务
+            pool.execute(ocr1);
+            pool.execute(ocr2);
+            pool.execute(ocr3);
+            pool.execute(ocr4);
 
-        //识别完毕后返回数据
-        int maxTime = 10 * 60;//超时时间设为一分钟
-        int time = 0;
-        while(++ time < maxTime){
+            //关闭线程池，不再接新任务
+            pool.shutdown();
             try {
-                //每0.1秒循环一次，降低循环次数
-                Thread.sleep(100);
+                //等待任务完成，超时时间设为60秒
+                pool.awaitTermination(60, TimeUnit.SECONDS);
+                Thread.sleep(100);//等待0.1秒让websocket先行（前端显示效果）
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println(ocrInfo.size());
-            if(ocrInfo.size() == images.size()){
-                //跳出循环
-                break;
-            }
+            //立即关闭线程池
+            pool.shutdownNow();
+            code = "200";
+        }else if(images.size() == 1){
+            JSONObject info = OCR.execute(images.get(0).getImg(),false);
+            info.put("imgId", images.get(0).getImgId());
+            sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
+            code = "200";
+        }else{
+            code = "500";
+            errMsg = "没有图片";
         }
-        //关闭线程池
-        executorService.shutdown();
 
-        JSONObject json = new JSONObject();
-        json.put("code", 200);
-        json.put("ocrInfo", ocrInfo);
-        Util.returnInfo(response, json);
+        result.put("code", code);
+        result.put("errMsg",errMsg);
+        result.put("ocrInfo", ocrInfo);
+        Util.returnInfo(response, result);
 	}
 	
 }

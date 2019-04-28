@@ -1,22 +1,19 @@
 package com.ljf.opencvocr.service;
 
-import java.util.List;
-
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-
 import com.alibaba.fastjson.JSONObject;
 import com.ljf.opencvocr.dao.Img;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-public class OcrThread extends Thread {
+import java.util.List;
+
+public class OcrTaskThread extends Thread {
 	
 	SimpMessagingTemplate sm;
     private List<Img> imgs;
-    private List<JSONObject> ocrInfoList;
     private String uuid;
 
-    public OcrThread(List<Img> images,List<JSONObject> ocrInfoList,String uuid,SimpMessagingTemplate sm){
+    public OcrTaskThread(List<Img> images, String uuid, SimpMessagingTemplate sm){
         this.imgs = images;
-        this.ocrInfoList = ocrInfoList;
         this.uuid = uuid;
         this.sm = sm;
     }
@@ -27,8 +24,7 @@ public class OcrThread extends Thread {
         for(int i = 0;i < imgs.size();i ++){
             JSONObject info = OCR.execute(imgs.get(i).getImg(),false);
             info.put("imgId", imgs.get(i).getImgId());
-            ocrInfoList.add(info);
-            if(uuid != null){            	
+            if(uuid != null){
             	sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
             }
         }

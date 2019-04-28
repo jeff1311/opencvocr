@@ -84,8 +84,11 @@
                 }
                 $('#idCard').html(loading);
             },
-            success: function(json){
-                console.log(json);
+            success: function(result){
+                console.log(result);
+                if(result.code != 200){
+                    alert(errMsg);
+                }
                 $('html,body').animate({scrollTop: $('#idCard').offset().top}, 500);
             }
         })
@@ -132,7 +135,7 @@
                 $('#' + img.imgId + ' .idCard').on('cssanimationend', function(){  
                     $(this).removeClass('shadow-pulse');
                 });
-                $('html,body').animate({scrollTop: $('#' + img.imgId).offset().top}, 300);
+                $('html,body').animate({scrollTop: $('#' + img.imgId).offset().top}, 100);
             });
         });
     }
@@ -155,6 +158,7 @@
     	});
     	return uuid;
     };
+
     //jquery.barrager.js 弹幕
     
 </script>
