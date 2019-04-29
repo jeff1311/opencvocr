@@ -92,12 +92,12 @@ public class OcrController {
             try {
                 //等待任务完成，超时时间设为180秒
                 pool.awaitTermination(180, TimeUnit.SECONDS);
+                //立即关闭线程池
+                pool.shutdownNow();
                 Thread.sleep(500);//等待0.5秒让websocket先行（前端显示效果）
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                pool.shutdownNow();
             }
-            //立即关闭线程池
-            pool.shutdownNow();
             code = "200";
         }else if(images.size() == 1){
             JSONObject info = OCR.execute(images.get(0).getImg(),Constants.OCR_IDCARD,false);
