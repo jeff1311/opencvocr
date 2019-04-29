@@ -3,7 +3,11 @@ package com.ljf.opencvocr.util;
 public class Constants {
 
     /**存储盘*/
-    public static final String disk = "E:";
+    public static final String DISK = "E:";
+    /**默认*/
+    public static final int OCR_DEFAULT = 0;
+    /**身份证*/
+    public static final int OCR_IDCARD = 1;
 
     /**56个名族*/
     public static final String[] NATIONS = {

@@ -2,6 +2,7 @@ package com.ljf.opencvocr.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ljf.opencvocr.dao.Img;
+import com.ljf.opencvocr.util.Constants;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class OcrTaskThread extends Thread {
     public void run() {
         System.out.println(Thread.currentThread().getName());
         for(int i = 0;i < imgs.size();i ++){
-            JSONObject info = OCR.execute(imgs.get(i).getImg(),"idCard",false);
+            JSONObject info = OCR.execute(imgs.get(i).getImg(),Constants.OCR_IDCARD,false);
             if(uuid != null){
                 info.put("imgId", imgs.get(i).getImgId());
                 sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());

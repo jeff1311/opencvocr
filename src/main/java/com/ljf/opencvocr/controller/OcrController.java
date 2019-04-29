@@ -6,6 +6,7 @@ import com.ljf.opencvocr.dao.Model;
 import com.ljf.opencvocr.service.OCR;
 import com.ljf.opencvocr.service.OcrTaskThread;
 import com.ljf.opencvocr.service.Upload;
+import com.ljf.opencvocr.util.Constants;
 import com.ljf.opencvocr.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -31,7 +32,7 @@ public class OcrController {
 	
 	@RequestMapping("/ocr/idCard")
 	public void idCard(HttpServletRequest request,HttpServletResponse response){
-//		Util.cleanFiles(Constants.disk + "/ocr/test");
+//		Util.cleanFiles(Constants.DISK + "/ocr/test");
         JSONObject result = new JSONObject();
         String code,errMsg = null;
         Model uploadInfo = Upload.getInfo(request);
@@ -45,7 +46,7 @@ public class OcrController {
             int corePoolSize = images.size() <= 4 ? images.size() : 4;//线程池的基本大小
             int maximumPoolSize = 4;//线程池中允许的最大线程数
             int keepAliveTime = 10;//空闲线程等待新任务的最长时间（秒）
-            LinkedBlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();//队列
+            LinkedBlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();//任务队列，存储暂时无法执行的任务，等待空闲线程来执行任务
             ExecutorService pool = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,keepAliveTime, TimeUnit.SECONDS, runnables);
 
             //每个线程的任务
@@ -99,7 +100,7 @@ public class OcrController {
             pool.shutdownNow();
             code = "200";
         }else if(images.size() == 1){
-            JSONObject info = OCR.execute(images.get(0).getImg(),"idCard",false);
+            JSONObject info = OCR.execute(images.get(0).getImg(),Constants.OCR_IDCARD,false);
             if(uuid != null){
                 info.put("imgId", images.get(0).getImgId());
                 sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
@@ -122,7 +123,7 @@ public class OcrController {
 	public void ocr(HttpServletRequest request,HttpServletResponse response){
         Model info = Upload.getInfo(request);
         BufferedImage img = info.getImages().get(0).getImg();
-        JSONObject result = OCR.execute(img, "", true);
+        JSONObject result = OCR.execute(img, Constants.OCR_DEFAULT, true);
         Util.returnInfo(response, result);
     }
 

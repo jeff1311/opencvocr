@@ -59,7 +59,7 @@ public class Face {
 
         Mat srcClone = null;
 		if(test){
-            Util.mkDirs(Constants.disk + "/ocr/test");
+            Util.mkDirs(Constants.DISK + "/ocr/test");
             srcClone = src.clone();
             // 为每张识别到的人脸画一个圈
             for (int i = 0; i < faces.length; i++) {
@@ -72,7 +72,7 @@ public class Face {
                 Scalar scalar = new Scalar(0, 255, 0);
                 Imgproc.rectangle(srcClone, p1, p2, scalar, 3);
             }
-            String fileName1 = Constants.disk + "/ocr/test/a.jpg";
+            String fileName1 = Constants.DISK + "/ocr/test/a.jpg";
             Imgcodecs.imwrite(Util.mkDirs(fileName1), srcClone);
         }
 
@@ -150,13 +150,13 @@ public class Face {
 
         // 保存图片
         if(test){
-            String fileName2 = Constants.disk + "/ocr/test/b.jpg";
+            String fileName2 = Constants.DISK + "/ocr/test/b.jpg";
             Imgcodecs.imwrite(Util.mkDirs(fileName2), src);
 
-            String fileName3 = Constants.disk + "/ocr/test/c.jpg";
+            String fileName3 = Constants.DISK + "/ocr/test/c.jpg";
             Imgcodecs.imwrite(Util.mkDirs(fileName3), crop);
 
-            String fileName4 = Constants.disk + "/ocr/test/d.jpg";
+            String fileName4 = Constants.DISK + "/ocr/test/d.jpg";
             Imgcodecs.imwrite(Util.mkDirs(fileName4), key);
         }
 

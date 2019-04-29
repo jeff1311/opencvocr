@@ -31,9 +31,9 @@ public class OCR {
 		System.load(opencvLib);
 	}
 
-	public static JSONObject execute(BufferedImage srcBi,String type, boolean test){
+	public static JSONObject execute(BufferedImage srcBi,int type, boolean test){
 	    JSONObject result = null;
-        if("idCard".equals(type)){
+        if(Constants.OCR_IDCARD == type){
             result = idCard(srcBi,test);
         }else{
             result = ocr(srcBi,test);
@@ -69,7 +69,7 @@ public class OCR {
         Mat gray = key;
         Imgproc.cvtColor(gray, gray, Imgproc.COLOR_BGR2GRAY);
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/e.jpg"), gray);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/e.jpg"), gray);
         }
 
         //二值化（自适应）
@@ -80,7 +80,7 @@ public class OCR {
         //过滤杂纹
 //		Imgproc.medianBlur(gray, gray,3);
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/f.jpg"), gray);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/f.jpg"), gray);
         }
 
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,3));//使用3*3交叉内核
@@ -88,13 +88,13 @@ public class OCR {
         //膨胀（白色膨胀）
         Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 20);//以这个内核为中心膨胀N倍
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/g.jpg"), gray);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/g.jpg"), gray);
         }
 
         //腐蚀（黑色膨胀）
         Imgproc.erode(gray, gray, kernel, new Point(-1, -1), 10);
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/h.jpg"), gray);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/h.jpg"), gray);
         }
 
         //查找轮廓
@@ -105,7 +105,7 @@ public class OCR {
         //创建一个白色图片作为背景
         Mat img = new Mat(cropSrc.rows(), cropSrc.cols(), CvType.CV_8UC1,new Scalar(255));
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/i.jpg"),img);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/i.jpg"),img);
         }
 
         for(int i = 0;i < contours.size();i ++){
@@ -142,8 +142,8 @@ public class OCR {
         }
 
         if(test){
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/j.jpg"),cropSrc2);
-            Imgcodecs.imwrite(Util.mkDirs(Constants.disk + "/ocr/test/k.jpg"),img);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/j.jpg"),cropSrc2);
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/k.jpg"),img);
         }
 
         //OCR
