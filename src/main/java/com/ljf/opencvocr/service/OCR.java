@@ -178,7 +178,6 @@ public class OCR {
         }
         System.out.println(text);
         text = text.replace("\n","<br>");
-        text = text.replace(" ","&nbsp;");
         JSONObject json = new JSONObject();
         json.put("code",200);
         json.put("text",text);
