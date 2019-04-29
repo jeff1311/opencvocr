@@ -147,15 +147,15 @@ public class OCR {
         }
 
         //OCR
-        ITesseract instance = new Tesseract();
+        ITesseract tess = new Tesseract();
         //设置训练库的位置
         String dataPath = Util.getClassPath() + "tessdata";
-        instance.setDatapath(dataPath);
-        instance.setLanguage("chi_sim");//chi_sim eng
+        tess.setDatapath(dataPath);
+        tess.setLanguage("chi_sim");//chi_sim eng
         String result = null;
         BufferedImage binary = ImgUtil.Mat2BufImg(img, ".jpg");
         try {
-            result =  instance.doOCR(binary);
+            result =  tess.doOCR(binary);
         } catch (TesseractException e) {
             e.printStackTrace();
         }
@@ -163,31 +163,16 @@ public class OCR {
         return IdCardUtil.filterOcrInfo(result);
     }
 
-    private static JSONObject ocr(BufferedImage srcBi,boolean test){
-        //创建一个Mat,颜色为白色
-        Mat src = new Mat(srcBi.getHeight(), srcBi.getWidth(), CvType.CV_8UC3,new Scalar(255, 255, 255));
-        //BufferedImage转Mat
-        for(int y = 0;y < src.rows();y ++){
-            for(int x = 0;x < src.cols();x ++){
-                int rgba = srcBi.getRGB(x,y);
-                Color col = new Color(rgba, true);
-                int r = col.getRed();
-                int g = col.getGreen();
-                int b = col.getBlue();
-                double[] data = {b,g,r};
-                src.put(y,x,data);
-            }
-        }
+    private static JSONObject ocr(BufferedImage img,boolean test){
         //OCR
-        ITesseract instance = new Tesseract();
+        ITesseract tess = new Tesseract();
         //设置训练库的位置
         String dataPath = Util.getClassPath() + "tessdata";
-        instance.setDatapath(dataPath);
-        instance.setLanguage("chi_sim");//chi_sim eng
+        tess.setDatapath(dataPath);
+        tess.setLanguage("chi_sim");//chi_sim eng
         String text = null;
-        BufferedImage binary = ImgUtil.Mat2BufImg(src, ".jpg");
         try {
-            text =  instance.doOCR(binary);
+            text =  tess.doOCR(img);
         } catch (TesseractException e) {
             e.printStackTrace();
         }
