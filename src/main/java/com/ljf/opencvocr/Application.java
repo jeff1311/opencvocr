@@ -1,9 +1,7 @@
 package com.ljf.opencvocr;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 
 @SpringBootApplication
 public class Application {
@@ -13,5 +11,5 @@ public class Application {
 //		//不使用spring boot内置tomcat
 //		new SpringApplicationBuilder(Application.class).web(WebApplicationType.NONE);
 	}
-	
+
 }
