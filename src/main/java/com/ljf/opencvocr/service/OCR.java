@@ -27,8 +27,8 @@ public class OCR {
 
 	static {
 		//载入opencv库
-		String opencvLib = Util.getClassPath() + "opencv/dll/opencv_java320.dll";
-		System.load(opencvLib);
+        String opencvLib = Util.getClassPath() + "opencv/dll/opencv_java320.dll";
+        System.load(opencvLib);
 	}
 
 	public static JSONObject execute(BufferedImage srcBi,int type, boolean test){
@@ -58,7 +58,7 @@ public class OCR {
         }
 
         //根据人脸识别裁剪身份证以内的区域
-        Map<String, Mat> crop = Face.idcardCrop(src,false);
+        Map<String, Mat> crop = Face.idcardCrop(src,test);
         Mat cropSrc = crop.get("crop");
         Mat cropSrc2 = null;
         if(test){
