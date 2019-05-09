@@ -42,21 +42,7 @@ public class OCR {
 	}
 
 	private static JSONObject idCard(BufferedImage srcBi,boolean test){
-        //创建一个Mat,颜色为白色
-        Mat src = new Mat(srcBi.getHeight(), srcBi.getWidth(), CvType.CV_8UC3,new Scalar(255, 255, 255));
-        //BufferedImage转Mat
-        for(int y = 0;y < src.rows();y ++){
-            for(int x = 0;x < src.cols();x ++){
-                int rgba = srcBi.getRGB(x,y);
-                Color col = new Color(rgba, true);
-                int r = col.getRed();
-                int g = col.getGreen();
-                int b = col.getBlue();
-                double[] data = {b,g,r};
-                src.put(y,x,data);
-            }
-        }
-
+        Mat src = buff2Mat(srcBi);
         //根据人脸识别裁剪身份证以内的区域
         Map<String, Mat> crop = Face.idcardCrop(src,test);
         Mat cropSrc = crop.get("crop");
@@ -163,7 +149,78 @@ public class OCR {
         return IdCardUtil.filterOcrInfo(result);
     }
 
-    private static JSONObject ocr(BufferedImage img,boolean test){
+    private static JSONObject ocr(BufferedImage srcBi,boolean test){
+	    Util.cleanFiles(Constants.DISK + "/ocr/test");
+        //BufferedImage转Mat
+        Mat src = buff2Mat(srcBi);
+        Mat src2 = buff2Mat(srcBi);
+        Mat srcGray = src.clone();
+        //灰度化
+        Imgproc.cvtColor(srcGray,srcGray,Imgproc.COLOR_BGR2GRAY);
+        if(test){
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/a.jpg"),srcGray);
+        }
+//        //二值化
+//        Imgproc.adaptiveThreshold(srcGray,srcGray,255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY,25,10);
+//        if(test){
+//            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/b.jpg"),srcGray);
+//        }
+
+        //查找轮廓
+//        Imgproc.Canny(srcGray, srcGray, 20, 60);
+//        if(test){
+//            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/c.jpg"),srcGray);
+//        }
+
+        ArrayList<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(srcGray, contours, hierarchy, 2, Imgproc.CHAIN_APPROX_SIMPLE);
+
+
+        //创建一个白色图片作为背景
+        Mat img = new Mat(src.rows(), src.cols(), CvType.CV_8UC1,new Scalar(255));
+
+        for(int i = 0;i < contours.size();i ++){
+            Rect rect = Imgproc.boundingRect(contours.get(i));
+
+            //画出矩形
+            if(test){
+                int x = rect.x;
+                int y = rect.y;
+                int w = x + rect.width;
+                int h = y + rect.height;
+                Point point1 = new Point(x, y);
+                Point point2 = new Point(w, h);
+                Scalar scalar = new Scalar(0, 255, 0);
+                Imgproc.rectangle(src2,point1,point2,scalar,1);
+            }
+
+            Mat r = new Mat(src, rect);
+            //灰度化
+            Imgproc.cvtColor(r,r,Imgproc.COLOR_BGR2GRAY);
+            //二值化（自适应）
+            Imgproc.adaptiveThreshold(r, r, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 25, 10);
+            Mat roi = new Mat(img, rect);
+            System.out.println(roi.width());
+            if(roi.width() < 50 && roi.height() < 50){
+                for(int y = 0;y < roi.rows();y ++){
+                    for(int x = 0;x < roi.cols();x ++){
+                        double[] data = r.get(y,x);
+                        roi.put(y, x, data);
+                    }
+                }
+            }
+
+        }
+
+        if(test){
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/c.jpg"),src2);
+        }
+
+        if(test){
+            Imgcodecs.imwrite(Util.mkDirs(Constants.DISK + "/ocr/test/d.jpg"),img);
+        }
+
         //OCR
         ITesseract tess = new Tesseract();
         //设置训练库的位置
@@ -171,8 +228,9 @@ public class OCR {
         tess.setDatapath(dataPath);
         tess.setLanguage("chi_sim");//chi_sim eng
         String text = null;
+        BufferedImage binary = ImgUtil.Mat2BufImg(img, ".jpg");
         try {
-            text =  tess.doOCR(img);
+            text =  tess.doOCR(binary);
         } catch (TesseractException e) {
             e.printStackTrace();
         }
@@ -205,5 +263,23 @@ public class OCR {
             }
         }
     }
-	
+
+    public static Mat buff2Mat(BufferedImage src){
+        //创建一个Mat,颜色为白色
+        Mat dst = new Mat(src.getHeight(), src.getWidth(), CvType.CV_8UC3,new Scalar(255, 255, 255));
+        //BufferedImage转Mat
+        for(int y = 0;y < dst.rows();y ++){
+            for(int x = 0;x < dst.cols();x ++){
+                int rgba = src.getRGB(x,y);
+                Color col = new Color(rgba, true);
+                int r = col.getRed();
+                int g = col.getGreen();
+                int b = col.getBlue();
+                double[] data = {b,g,r};
+                dst.put(y,x,data);
+            }
+        }
+        return dst;
+    }
+
 }

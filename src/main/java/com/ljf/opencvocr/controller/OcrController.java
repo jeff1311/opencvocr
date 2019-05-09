@@ -100,7 +100,7 @@ public class OcrController {
             }
             code = "200";
         }else if(images.size() == 1){
-            JSONObject info = OCR.execute(images.get(0).getImg(),Constants.OCR_IDCARD,false);
+            JSONObject info = OCR.execute(images.get(0).getImg(),Constants.OCR_IDCARD,true);
             if(uuid != null){
                 info.put("imgId", images.get(0).getImgId());
                 sm.convertAndSendToUser(uuid, "/idCard", info.toJSONString());
